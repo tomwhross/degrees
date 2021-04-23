@@ -3,6 +3,7 @@
 
 # venv / pyenv
 bin/
+share/
 pyvenv.cfg
 
 # Byte-compiled / optimized / DLL files
