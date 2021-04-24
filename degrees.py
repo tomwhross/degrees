@@ -130,7 +130,7 @@ def shortest_path(source, target, method="BFS"):
 
         # if the frontier is empty, there are no solutions
         if frontier.empty():
-            raise Exception("No solution")
+            return None
 
         # remove a node from the frontier
         node = frontier.remove()
