@@ -1,7 +1,8 @@
 import csv
 import sys
+import textwrap
 
-from util import Node, StackFrontier, QueueFrontier
+from util import Node, QueueFrontier, StackFrontier
 
 # Maps names to a set of corresponding person_ids
 names = {}
@@ -24,7 +25,7 @@ def load_data(directory):
             people[row["id"]] = {
                 "name": row["name"],
                 "birth": row["birth"],
-                "movies": set()
+                "movies": set(),
             }
             if row["name"].lower() not in names:
                 names[row["name"].lower()] = {row["id"]}
@@ -38,7 +39,7 @@ def load_data(directory):
             movies[row["id"]] = {
                 "title": row["title"],
                 "year": row["year"],
-                "stars": set()
+                "stars": set(),
             }
 
     # Load stars
@@ -84,16 +85,69 @@ def main():
             print(f"{i + 1}: {person1} and {person2} starred in {movie}")
 
 
-def shortest_path(source, target):
+def check_goal(node, goal):
+    """
+    Check if a goal has been reached
+    and if so return the pairs of movie id and person id
+    """
+
+    # goal check
+    if node.state == goal:
+        pairs = []
+        while node.parent is not None:
+            pairs.append((node.action, node.state))
+            node = node.parent
+
+        pairs.reverse()
+
+        return pairs
+
+    return None
+
+
+def shortest_path(source, target, method="BFS"):
     """
     Returns the shortest list of (movie_id, person_id) pairs
     that connect the source to the target.
 
     If no possible path, returns None.
     """
+    # initialize the frontier
+    if method != "BFS":
+        frontier = StackFrontier()
+    else:
+        frontier = QueueFrontier()
 
-    # TODO
-    raise NotImplementedError
+    # tracking explored nodes and counts
+    num_explored = 0
+    explored = set()
+
+    # add the initial node
+    initial = Node(state=source, parent=None, action=None)
+    frontier.add(initial)
+
+    while True:
+
+        # if the frontier is empty, there are no solutions
+        if frontier.empty():
+            raise Exception("No solution")
+
+        # remove a node from the frontier
+        node = frontier.remove()
+
+        # mark node as explored and increase the count
+        explored.add(node.state)
+        num_explored += 1
+
+        # add neighbours to the frontier
+        for action, state in neighbors_for_person(node.state):
+            if not frontier.contains_state(state) and state not in explored:
+                child = Node(state=state, parent=node, action=action)
+                # check if a solution was found, and if so return it
+                solution = check_goal(child, target)
+                if solution:
+                    return solution
+                frontier.add(child)
 
 
 def person_id_for_name(name):
@@ -127,6 +181,7 @@ def neighbors_for_person(person_id):
     Returns (movie_id, person_id) pairs for people
     who starred with a given person.
     """
+
     movie_ids = people[person_id]["movies"]
     neighbors = set()
     for movie_id in movie_ids:
